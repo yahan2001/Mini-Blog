@@ -8,9 +8,9 @@ import blog_pic_7 from './blog_pic_7.png';
 import blog_pic_8 from './blog_pic_8.png';
 import blog_pic_9 from './blog_pic_9.png';
 import blog_pic_10 from './blog_pic_10.png';
-import facebook_icon from './facebook_icon.svg'
-import googleplus_icon from './googleplus_icon.svg'
-import twitter_icon from './twitter_icon.svg'
+import facebook_icon from './facebook_icon.png'
+import googleplus_icon from './googleplus_icon.png'
+import twitter_icon from './twitter_icon.png'
 import logo from './logo.svg'
 import arrow from './arrow.svg'
 import logo_light from './logo_light.svg'
