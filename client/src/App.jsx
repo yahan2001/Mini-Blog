@@ -7,7 +7,7 @@ import Layout from './pages/admin/Layout'
 import AddBlog from './pages/admin/AddBlog'
 import Comment from './pages/admin/Comment'
 import ListBlog from './pages/admin/ListBlog'
-
+import Login from './components/admin/Login'
 
 const App = () => {
   return (
@@ -15,11 +15,11 @@ const App = () => {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/blog/:id' element={<Blog />} />
-        <Route path='/admin' element={<Layout />} >
+        <Route path='/admin' element={true ? <Layout /> : <Login/> } >
           <Route index element={<Dashboard />} />
           <Route path='addBlog' element={<AddBlog />} />
           <Route path='comments' element={<Comment />} />
-          <Route path='listBlogs' element={<ListBlogs />} />
+          <Route path='listBlogs' element={<ListBlog />} />
         </Route>
       </Routes>
     </div>
