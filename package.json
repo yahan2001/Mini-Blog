@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@imagekit/nodejs": "^7.3.0",
     "@tailwindcss/vite": "^4.1.18",
+    "imagekit": "^6.0.0",
     "moment": "^2.30.1",
     "react-router-dom": "^7.11.0",
     "tailwindcss": "^4.1.18"
