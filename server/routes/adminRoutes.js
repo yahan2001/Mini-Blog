@@ -1,19 +1,37 @@
-import express from 'express';
-// Import cả 2 hàm từ file controller
-import { adminLogin, addBlog } from '../controllers/adminController.js'; 
-import { getAllBlogs } from '../controllers/blogController.js';
-import upload from '../middleware/multer.js';
+import express from "express";
+import {
+	adminLogin,
+	getAllBlogsAdmin,
+	getAllComments,
+	deletecommentById,
+	approveCommentById,
+	getDashboard,
+	deleteBlogById,
+	updateBlogPublishStatus
+} from "../controllers/adminController.js";
+import auth from "../middleware/auth.js";
 
-const blogRouter = express.Router();
+const adminRouter = express.Router();
 
-// Route xử lý login
-blogRouter.post("/login", adminLogin);
+adminRouter.post('/login', adminLogin); // them route de dang nhap cho admin
+adminRouter.get('/comments', auth, getAllComments); // them route de lay tat ca comment tu database gui ve client
 
-// Route xử lý thêm blog với middleware multer
-blogRouter.post("/add", upload.single('image'), addBlog);
+// them route de lay tat ca blog tu database gui ve client, chi cho phep admin moi co quyen truy cap
+adminRouter.get('/blogs', auth, getAllBlogsAdmin); 
 
-// Compatibility route: một số request đang gọi /api/admin/all
-blogRouter.get('/all', getAllBlogs);
-blogRouter.post('/all', getAllBlogs);
+// them route de xoa blog theo id tu database gui ve client, chi cho phep admin moi co quyen truy cap
+adminRouter.delete('/blogs', auth, deleteBlogById); 
 
-export default blogRouter;
+// them route de cap nhat trang thai publish cua blog, chi cho phep admin moi co quyen truy cap
+adminRouter.put('/blogs', auth, updateBlogPublishStatus); 
+
+// them route de xoa comment theo id tu database gui ve client, chi cho phep admin moi co quyen truy cap
+adminRouter.post('/delete-comment', auth, deletecommentById); 
+
+// them route de duyet comment theo id tu database gui ve client, chi cho phep admin moi co quyen truy cap
+adminRouter.post('/approve-comment', auth, approveCommentById); 
+
+// them route de lay du lieu dashboard tu database gui ve client, chi cho phep admin moi co quyen truy cap
+adminRouter.get('/dashboard', auth, getDashboard); 
+
+export default adminRouter;

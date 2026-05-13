@@ -1,6 +1,21 @@
 import React from 'react'
 import {assets} from '../assets/assets'
+import { useAppContext } from '../context/AppContext';
 const Header = () => {
+
+  const { input, setInput } = useAppContext();
+  const inputRef = React.useRef(null);
+  
+  const handleSubmit = (e) => {
+    e.preventDefault(); // chan su kien submit mac dinh cua form de khong tai lai trang
+    setInput(inputRef.current.value); // cap nhat gia tri cua input trong context bang gia tri hien tai cua input trong form tim kiem
+  }
+
+  const onClear = () => {
+    setInput('');
+    inputRef.current.value = ''; // xoa gia tri trong input khi bam nut Clear Search
+  }
+
   return (
     <div className = 'mx-8 sm:mx-16 xl:mx-24 relative'>
         <div className ='text-center mt-20 mb-8' >
@@ -12,11 +27,14 @@ const Header = () => {
 
             <h1 className = 'text-3xl sm:text-6xl font-semibold  text-gray-700'>Your own <span className ='text-primary'>blogging</span>  <br/> platform.</h1>
             <p className = 'my-6 sm:my-8  m-auto max-sm:text-xs text-gray-500'> This is your space to think out loud, to share what matters, and to write without filters. whether it's one word or a thousand, your story starts right here</p>
-            <form className='flex justify-between max-w-lg max-sm:scale-75 mx-auto border border-gray-300 bg-white rounded overflow-hidden  '>
-              <input type="text" placeholder='Search for blogs' required 
+            <form  onSubmit={handleSubmit} className='flex justify-between max-w-lg max-sm:scale-75 mx-auto border border-gray-300 bg-white rounded overflow-hidden  '>
+              <input ref={inputRef} type="text" placeholder='Search for blogs' required 
               className ='w-full pl-4 outline-none' />
               <button type="submit" className='bg-primary text-white px-8 py-2 m-1.5 rounded hover:scale-105 transition-transform transition-colors cursor-pointer '>Search</button>
             </form>
+        </div>
+        <div className='text-center'>
+          {input &&<button onClick= {onClear} className=' border font-light text-xs py-1 px-3 rounded-sm shadow-custom-sm cursor-pointer' >Clear Search</button>}
         </div>
         <img src={assets.gradientBackground} alt="" className='absolute -top-50 -z-1 opacity-50' />
     </div>

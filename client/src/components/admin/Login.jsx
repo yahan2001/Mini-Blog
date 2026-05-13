@@ -1,14 +1,32 @@
 import React from 'react'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+import { useAppContext } from '../../context/AppContext'
 
 const Login = () => {
+
+  const {setToken, navigate} = useAppContext();
 
   const [email, setEmail] = React.useState('')
   const [password, setPassword] = React.useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-  }
-
+    try {
+      const {data} = await axios.post('/api/admin/login', {email, password})
+      if (data.success) {
+        setToken(data.token)
+        localStorage.setItem('token', data.token)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
+        navigate('/admin')
+      }
+    else {
+      toast.error(data.message)
+    }
+    } catch (error) {
+       toast.error(error.response?.data?.message || error.message)
+    }
+      }
   return (
     <div className='flex items-center justify-center h-screen'>
       <div className='w-full max-w-sm p-6 max-md:m-6 border border-primary/30 shadow-xl shadow-primary/15 rounded-lg'>

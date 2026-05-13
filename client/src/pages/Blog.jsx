@@ -1,35 +1,83 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { blog_data, assets, comments_data } from "../assets/assets"
+import { assets } from "../assets/assets"
 import Navbar from '../components/Navbar'
 import moment from 'moment'
 import Footer from '../components/Footer'
-import Loader from '../components/loader'
+import Loader from '../components/Loader'
+import axios from 'axios'
+import toast from 'react-hot-toast'
+import { useAppContext } from '../context/AppContext'
+
+// Set axios baseURL
+axios.defaults.baseURL = 'http://localhost:3000'
+
 const Blog = () => {
   const { id } = useParams()
 
   const [data, setData] = useState(null)
   const [comments, setComments] = useState([])
-
+  const [loading, setLoading] = useState(true)
   const [name, setName] = useState('')
-  const [content , setContent] = useState('')
+  const [content, setContent] = useState('')
 
-  const addcomment = (e) => {
+  const fetchBlogData = async () => {
+    try {
+      setLoading(true)
+      console.log('Fetching blog with ID:', id)
+      const response = await axios.get(`/api/blog/${id}`)
+      console.log('Full response:', response.data)
+      const blogData = response.data.blog || response.data.data
+      if (response.data.success && blogData) {
+        setData(blogData)
+      } else {
+        toast.error('Blog not found')
+      }
+    } catch (error) {
+      console.error('Error fetching blog:', error)
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  const fetchComments = async () => {
+    try {
+      const { data } = await axios.get(`/api/blog/comment/${id}`)
+      if (data.success) {
+        setComments(data.comments)
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
+  }
+
+  const addcomment = async (e) => {
     e.preventDefault()
-    // xử lý submit sau
+    try {
+      const { data } = await axios.post('/api/blog/add-comment', { name, content, blogId: id })
+      if (data.success) {
+        toast.success('Comment added successfully')
+        setName('')
+        setContent('')
+        fetchComments()
+      } else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    }
   }
 
   useEffect(() => {
-    const foundBlog = blog_data.find(item => item._id === id)
-    setData(foundBlog)
-
-    const filteredComments = comments_data.filter(
-      item => item.blog._id === id
-    )
-    setComments(filteredComments)
+    fetchBlogData()
+    fetchComments()
   }, [id])
 
-  if (!data) return <div>Loading...</div>
+  if (loading) return <Loader />
+  if (!data) return <div>Blog not found</div>
 
   return (
     <div className='relative'>
@@ -125,8 +173,7 @@ const Blog = () => {
       </div>
       <Footer />
     </div>
-  ) ; <Loader/> 
+  )
 }
-
 
 export default Blog

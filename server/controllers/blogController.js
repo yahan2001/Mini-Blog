@@ -1,22 +1,29 @@
 import fs from "fs";
 import imagekit from "../configs/imageKit.js";
 import Blog from "../models/Blog.js";
+import Comment from "../models/Comment.js";
 
 
 export const createBlog = async (req, res) => {
     try {
         //nhan du lieu tu client
-        const { title, subTitle, description, category, isPublished } = req.body;
-        //kiem tra xem cac truong co duoc dien day du hay khong
-        if (!title || !subTitle || !description || !category || isPublished === undefined) {
+        let { title, subTitle, description, category, isPublished } = req.body;
+        
+        if (!title || !subTitle || !description || !category) {
             return res.json({ success: false, message: "All fields are required" });
         }
-        const fileBuffer = fs.readFileSync(image.path);
+        
+        if (!req.file) {
+            return res.json({ success: false, message: "Image is required" });
+        }
+
+        // Convert string to boolean (FormData converts boolean to string)
+        isPublished = isPublished === 'true' || isPublished === true;
 
         //upload anh len imagekit va lay ve url cua anh do
         const response = await imagekit.upload({ 
-            file: fileBuffer,
-            fileName: imageFile.originalname,
+            file: req.file.buffer,
+            fileName: req.file.originalname,
             folder : "/blog"
         });
 
@@ -30,11 +37,8 @@ export const createBlog = async (req, res) => {
             ]
         });
 
-        //tao moi mot blog va luu tru trong database
-        const image = optimizedImageUrl; 
-
         //luu tru blog moi trong database
-        await Blog.create({ title, subTitle, description, category, image, isPublished });
+        await Blog.create({ title, subTitle, description, category, image: optimizedImageUrl, isPublished });
 
         //gui ve client thong bao tao blog thanh cong
         res.json({ success: true, message: "Blog created successfully" });
@@ -82,7 +86,9 @@ export const deleteBlogsById = async (req, res) => {
         const deletedBlog = await Blog.findByIdAndDelete(id); // xoa blog theo id tu database
         if (!deletedBlog) {
             return res.json({ success: false, message: "Blog not found" });
-        }
+        }   
+
+        await Comment.deleteMany({ blog: id }); // xoa tat ca comment cua blog do tu database
 
         res.json({ success: true, message: "Blog deleted successfully" });// gui ve client thong bao xoa blog thanh cong
     } catch (error) {
@@ -139,5 +145,28 @@ export const togglePublishBlog = async (req, res) => {
     catch (error) {
         // neu co loi thi gui ve client thong bao loi
         res.json({ success: false, message: error.message });
+    }
+}
+
+export const addComment = async (req, res) => {
+    try {
+        const {blogId, name, content} = req.body; //lay du lieu tu body
+        await Comment.create({blog: blogId, name, content}); // tao moi mot comment va luu tru trong database
+        res.json({success: true, message: "Comment added for review"}); // gui ve client thong bao them comment thanh cong
+    } catch (error) {
+        res.json({success: false, message: error.message}); // neu co loi thi gui ve client thong bao loi
+    }
+}
+
+export const getBlogComments = async (req, res) => {
+    try {
+        const {blogId} = req.params; // lay blogId tu params- params la du lieu duoc truyen qua url
+
+        // tim tat ca comment cua blog do trong database, chi lay nhung comment da duoc phe duyet (isApproved: true) 
+        // va sap xep theo thoi gian tao moi nhat
+        const comments = await Comment.find({blog: blogId, isApproved: true}).sort({createdAt: -1});
+        res.json({ success: true, comments }); // gui ve client du lieu cac comment do
+    } catch (error) {
+        res.json({ success: false, message: error.message }); // neu co loi thi gui ve client thong bao loi
     }
 }

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import Blog from '../models/Blog.js';
+import Comment from '../models/Comment.js';
 import imagekit from '../configs/imageKit.js'; 
 
 // 1. Login
@@ -10,7 +11,7 @@ export const adminLogin = async (req, res) => {
         if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
             return res.json({ success: false, message: "Sai tài khoản hoặc mật khẩu" });
         }
-        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '7d' });
         res.json({ success: true, token });
     } catch (error) {
         res.json({ success: false, message: error.message });
@@ -89,3 +90,86 @@ export const addBlog = async (req, res) => {
     });
   }
 };
+
+export const getAllBlogsAdmin = async (req, res) => {
+    try {
+      
+        const blogs = await Blog.find().sort({ createdAt: -1 });// lay tat ca cac blog tu database va sap xep theo thoi gian tao moi nhat o tren
+        res.json({ success: true, blogs });// gui ve client du lieu cac blog
+    } catch (error) {
+        res.json({ success: false, message: error.message });   
+    }
+}
+
+export const getAllComments = async (req, res) => {
+    try {
+
+      // lay tat ca comment tu database va sap xep theo thoi gian tao moi nhat o tren,
+      // lay thong tin cua blog ma comment do thuoc ve
+        const comments = await Comment.find().populate('blog').sort({ createdAt: -1 }); 
+        res.json({ success: true, comments });// gui ve client du lieu cac comment
+    } catch (error) {
+        res.json({ success: false, message: error.message });   
+    }
+}
+
+export const getDashboard = async (req, res) => {
+    try {
+
+      // lay 5 blog moi nhat tu database va sap xep theo thoi gian tao moi nhat o tren
+      const recentBlogs = await Blog.find().sort({ createdAt: -1 }).limit(5); 
+      const blogs = await Blog.countDocuments(); // dem tong so blog trong database
+      const comments = await Comment.countDocuments(); // lay tat ca cac comment tu database
+      const drafts = await Blog.countDocuments({ isPublished: false }); // dem tong so bai viet nhap
+      
+      const dashboardData = {
+        blogs, comments, recentBlogs,drafts
+      };
+      res.json({ success: true, data: dashboardData });// gui ve client du lieu dashboard
+    } catch (error) {
+        res.json({ success: false, message: error.message }); 
+    }
+}
+
+export const deletecommentById = async (req, res) => {
+    try {
+        const { id } = req.body;// lay id tu body
+        await Comment.findByIdAndDelete(id); // xoa comment theo id tu database
+        res.json({ success: true, message: "Comment deleted successfully" });// gui ve client thong bao xoa comment thanh cong
+    } catch (error) {
+        res.json({ success: false, message: error.message }); // neu co loi thi gui ve client thong bao loi
+     }
+}
+
+export const approveCommentById = async (req, res) => {
+    try {
+        const { id } = req.body;// lay id tu body
+    await Comment.findByIdAndUpdate(id, { isApproved: true }); // cap nhat trang thai duyet comment
+        res.json({ success: true, message: "Comment approved successfully" });// gui ve client thong bao xoa comment thanh cong
+    } catch (error) {
+        res.json({ success: false, message: error.message }); // neu co loi thi gui ve client thong bao loi
+     }
+}
+
+// Xóa blog theo id
+export const deleteBlogById = async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Blog.findByIdAndDelete(id);
+        res.json({ success: true, message: "Blog deleted successfully" });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+// Cập nhật trạng thái publish của blog
+export const updateBlogPublishStatus = async (req, res) => {
+    try {
+        const { id, isPublished } = req.body;
+        const updatedBlog = await Blog.findByIdAndUpdate(id, { isPublished }, { new: true });
+        res.json({ success: true, message: "Blog publish status updated successfully", blog: updatedBlog });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+

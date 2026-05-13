@@ -1,13 +1,28 @@
 import React from 'react'
 import BlogTableItem from '../../components/admin/BlogTableItem'
 import { assets, blog_data } from '../../assets/assets'
+import { useAppContext } from '../../context/AppContext'
+import axios from 'axios'
+import toast from 'react-hot-toast'
 
 const Listblog = () => {
 
-  const [blogs, setBlogs] = React.useState([])
+  const [blogs, setBlogs] = React.useState([]) // su dung useState de tao state blogs de luu tru danh sach cac blog duoc lay tu server va ham setBlogs de cap nhat state do
 
   const fetchBlogs = async () => {
-    setBlogs(blog_data)
+    try {
+      const { data } = await axios.get('/api/admin/blogs'); // thuc hien yeu cau GET den server de lay danh sach cac blog
+      if (data.success) {
+        setBlogs(data.blogs); // neu yeu cau thanh cong thi cap nhat state blogs voi du lieu cac blog duoc lay tu server
+      }else{
+        toast.error(data.message); // neu yeu cau khong thanh cong thi hien thi thong bao loi
+      }
+    } catch (error) {
+      console.error("Error fetching blogs:", error);
+      // neu co loi thi gui ve client thong bao loi
+      toast.error("Failed to fetch blogs. Please try again later.");
+      // setBlogs([]); // cap nhat state blogs voi mot mang rong de hien thi trang thai khong co blog
+    }
   }
 
   React.useEffect(() => {
