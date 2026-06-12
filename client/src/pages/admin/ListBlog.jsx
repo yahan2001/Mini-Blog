@@ -1,7 +1,6 @@
 import React from 'react'
 import BlogTableItem from '../../components/admin/BlogTableItem'
-import { assets, blog_data } from '../../assets/assets'
-import { useAppContext } from '../../context/AppContext'
+import { assets } from '../../assets/assets'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 

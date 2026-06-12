@@ -1,6 +1,5 @@
 import React from 'react'
 import { assets, footer_data } from '../assets/assets'
-import { div, s } from 'framer-motion/client'
 
 const Footer = () => {
   return (

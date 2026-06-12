@@ -2,12 +2,15 @@ import fs from "fs";
 import imagekit from "../configs/imageKit.js";
 import Blog from "../models/Blog.js";
 import Comment from "../models/Comment.js";
+import { generateContent, generateFallbackContent } from "../utils/generateContent.js";
+import { createUniqueSlug } from "../utils/slug.js";
+
 
 
 export const createBlog = async (req, res) => {
     try {
         //nhan du lieu tu client
-        let { title, subTitle, description, category, isPublished } = req.body;
+        let { title, subTitle, description, category, isPublished, metaDescription } = req.body;
         
         if (!title || !subTitle || !description || !category) {
             return res.json({ success: false, message: "All fields are required" });
@@ -37,8 +40,10 @@ export const createBlog = async (req, res) => {
             ]
         });
 
+        const slug = await createUniqueSlug(title);
+
         //luu tru blog moi trong database
-        await Blog.create({ title, subTitle, description, category, image: optimizedImageUrl, isPublished });
+        await Blog.create({ title, subTitle, slug, metaDescription, description, category, image: optimizedImageUrl, isPublished });
 
         //gui ve client thong bao tao blog thanh cong
         res.json({ success: true, message: "Blog created successfully" });
@@ -63,7 +68,10 @@ export const getAllBlogs = async (req, res) => {
 // lay mot blog theo id tu db gui ve client => hien thi chi tiet blog do
 export const getBlogsById = async (req, res) => {
     try {
-        const blog = await Blog.findById(req.params.id); // lay mot blog theo id tu database
+        const { id } = req.params;
+        const blog = id.match(/^[0-9a-fA-F]{24}$/)
+            ? await Blog.findById(id)
+            : await Blog.findOne({ slug: id });
         if (!blog) {
             // neu khong tim thay blog thi gui ve client thong bao khong tim thay
             return res.json({ success: false, message: "Blog not found" }); 
@@ -99,14 +107,16 @@ export const deleteBlogsById = async (req, res) => {
 
 export const updateBlogById = async (req, res) => {
     try {
-        const { id, title, subTitle, description, category, isPublished } = req.body;
+        const { id, title, subTitle, description, category, isPublished, metaDescription } = req.body;
         if (!id) {
             return res.json({ success: false, message: "Blog id is required" });
         }
 
         const updateData = {};
         if (title !== undefined) updateData.title = title;
+        if (title !== undefined) updateData.slug = await createUniqueSlug(title, id);
         if (subTitle !== undefined) updateData.subTitle = subTitle;
+        if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
         if (description !== undefined) updateData.description = description;
         if (category !== undefined) updateData.category = category;
         if (isPublished !== undefined) updateData.isPublished = isPublished;
@@ -168,5 +178,31 @@ export const getBlogComments = async (req, res) => {
         res.json({ success: true, comments }); // gui ve client du lieu cac comment do
     } catch (error) {
         res.json({ success: false, message: error.message }); // neu co loi thi gui ve client thong bao loi
+    }
+}
+
+export const generateBlogContent = async (req, res) => {
+    try {
+        const { prompt } = req.body; // lay prompt tu body
+        
+        if (!prompt || prompt.trim().length === 0) {
+            return res.json({ success: false, message: "Prompt cannot be empty" });
+        }
+
+        const content = await generateContent(prompt); // su dung ham generateContent de tao noi dung blog tu prompt
+        res.json({ success: true, content }); // gui ve client noi dung blog da duoc tao
+    } catch (error) {
+        console.error('generateBlogContent error:', error.message);
+        
+        // Khi API fail, dùng fallback content thay vì báo lỗi
+        const { prompt } = req.body;
+        const fallbackContent = generateFallbackContent(prompt);
+        
+        console.warn('Using fallback content due to API error');
+        res.json({ 
+            success: true, 
+            content: fallbackContent,
+            note: "Content generated from template. API is currently unavailable."
+        });
     }
 }

@@ -1,15 +1,18 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import Sidebar from '../../components/admin/Sidebar'
 import { useAppContext } from '../../context/AppContext'
-
-const Layout = () => {
+import { useNavigate } from 'react-router-dom'
+const Layout = () => {  
     const navigate = useNavigate()
-    const { setToken } = useAppContext()
+
+    const {axios, setToken} = useAppContext() // su dung hook useAppContext de lay gia tri axios tu context de thuc hien cac yeu cau HTTP den server
     const logout = () => {
         setToken(null)
-        localStorage.removeItem('token')
+        localStorage.removeItem('token');
+        axios.defaults.headers.common["Authorization"] = null; // xoa header Authorization de xoa
+        setToken(null); // cap nhat state token thanh null de cap nhat giao dien
         navigate('/')
     }
   return (

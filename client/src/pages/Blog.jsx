@@ -8,12 +8,15 @@ import Loader from '../components/Loader'
 import axios from 'axios'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../context/AppContext'
+import { Blogcard } from '../components/Blogcard'
+import { getReadingTime } from '../utils/blog'
 
 // Set axios baseURL
 axios.defaults.baseURL = 'http://localhost:3000'
 
 const Blog = () => {
   const { id } = useParams()
+  const { blogs } = useAppContext()
 
   const [data, setData] = useState(null)
   const [comments, setComments] = useState([])
@@ -30,6 +33,7 @@ const Blog = () => {
       const blogData = response.data.blog || response.data.data
       if (response.data.success && blogData) {
         setData(blogData)
+        fetchComments(blogData._id)
       } else {
         toast.error('Blog not found')
       }
@@ -41,9 +45,9 @@ const Blog = () => {
     }
   }
   
-  const fetchComments = async () => {
+  const fetchComments = async (blogId) => {
     try {
-      const { data } = await axios.get(`/api/blog/comment/${id}`)
+      const { data } = await axios.get(`/api/blog/comment/${blogId}`)
       if (data.success) {
         setComments(data.comments)
       } else {
@@ -56,15 +60,20 @@ const Blog = () => {
 
   const addcomment = async (e) => {
     e.preventDefault()
+    if (!data?._id) {
+      toast.error('Blog not loaded yet')
+      return
+    }
+
     try {
-      const { data } = await axios.post('/api/blog/add-comment', { name, content, blogId: id })
-      if (data.success) {
+      const response = await axios.post('/api/blog/add-comment', { name, content, blogId: data._id })
+      if (response.data.success) {
         toast.success('Comment added successfully')
         setName('')
         setContent('')
-        fetchComments()
+        fetchComments(data._id)
       } else {
-        toast.error(data.message)
+        toast.error(response.data.message)
       }
     } catch (error) {
       toast.error(error.message)
@@ -73,11 +82,29 @@ const Blog = () => {
 
   useEffect(() => {
     fetchBlogData()
-    fetchComments()
   }, [id])
+
+  useEffect(() => {
+    if (!data) return
+
+    document.title = `${data.title} | MiniBlog`
+
+    let metaTag = document.querySelector('meta[name="description"]')
+    if (!metaTag) {
+      metaTag = document.createElement('meta')
+      metaTag.setAttribute('name', 'description')
+      document.head.appendChild(metaTag)
+    }
+
+    metaTag.setAttribute('content', data.metaDescription || data.subTitle || '')
+  }, [data])
 
   if (loading) return <Loader />
   if (!data) return <div>Blog not found</div>
+
+  const relatedPosts = blogs
+    .filter((blog) => blog._id !== data._id && blog.category === data.category)
+    .slice(0, 3)
 
   return (
     <div className='relative'>
@@ -105,6 +132,7 @@ const Blog = () => {
         <p className='inline-block py-1 px-4 rounded-full mb-6 border text-sm border-primary/35 bg-primary/5 font-medium text-primary'>
           Michael Brown
         </p>
+        <p className='text-sm text-gray-400'>{getReadingTime(data.description)} min read</p>
       </div>
 
       <div className='mx-5 max-w-5xl md:mx-auto my-10 mt-6'>
@@ -170,6 +198,17 @@ const Blog = () => {
             <img src={assets.googleplus_icon} width={50} alt="Google+" />
           </div>
         </div>
+
+        {relatedPosts.length > 0 && (
+          <div className='my-24 max-w-5xl mx-auto'>
+            <h3 className='text-2xl font-semibold text-gray-800 mb-8'>Related posts</h3>
+            <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8'>
+              {relatedPosts.map((blog) => (
+                <Blogcard key={blog._id} blog={blog} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
       <Footer />
     </div>

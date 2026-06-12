@@ -7,9 +7,12 @@ import {
 	approveCommentById,
 	getDashboard,
 	deleteBlogById,
-	updateBlogPublishStatus
+	updateBlogPublishStatus,
+	getBlogByIdAdmin,
+	updateBlogByIdAdmin
 } from "../controllers/adminController.js";
 import auth from "../middleware/auth.js";
+import upload from "../middleware/multer.js";
 
 const adminRouter = express.Router();
 
@@ -18,6 +21,10 @@ adminRouter.get('/comments', auth, getAllComments); // them route de lay tat ca 
 
 // them route de lay tat ca blog tu database gui ve client, chi cho phep admin moi co quyen truy cap
 adminRouter.get('/blogs', auth, getAllBlogsAdmin); 
+
+adminRouter.get('/blogs/:id', auth, getBlogByIdAdmin);
+
+adminRouter.put('/blogs/:id', auth, upload.single('image'), updateBlogByIdAdmin);
 
 // them route de xoa blog theo id tu database gui ve client, chi cho phep admin moi co quyen truy cap
 adminRouter.delete('/blogs', auth, deleteBlogById); 

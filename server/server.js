@@ -10,6 +10,13 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+// Set timeout for AI generation requests
+app.use('/api/blog/generate-content', (req, res, next) => {
+  req.setTimeout(120000); // 2 minutes timeout cho AI generation
+  res.setTimeout(120000);
+  next();
+});
+
 app.get('/', (req, res) => res.send('API is working'));
 app.use('/api/admin', adminRouter);
 app.use('/api/blog', blogRouter);

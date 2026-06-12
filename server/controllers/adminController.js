@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import Blog from '../models/Blog.js';
 import Comment from '../models/Comment.js';
 import imagekit from '../configs/imageKit.js'; 
+import { createUniqueSlug } from '../utils/slug.js';
 
 // 1. Login
 export const adminLogin = async (req, res) => {
@@ -50,7 +51,7 @@ export const addBlog = async (req, res) => {
       });
     }
 
-    const { title, subTitle, description, category } = parsedBlog;
+    const { title, subTitle, description, category, metaDescription } = parsedBlog;
     const isPublished = parsedBlog.isPublished ?? true;
 
     if (!title || !subTitle || !description || !category) {
@@ -69,6 +70,8 @@ export const addBlog = async (req, res) => {
     const newBlog = new Blog({
       title,
       subTitle,
+      slug: await createUniqueSlug(title),
+      metaDescription,
       description,
       category,
       image: uploadResponse.url,
@@ -98,6 +101,58 @@ export const getAllBlogsAdmin = async (req, res) => {
         res.json({ success: true, blogs });// gui ve client du lieu cac blog
     } catch (error) {
         res.json({ success: false, message: error.message });   
+    }
+}
+
+export const getBlogByIdAdmin = async (req, res) => {
+    try {
+        const blog = await Blog.findById(req.params.id);
+        if (!blog) {
+            return res.json({ success: false, message: "Blog not found" });
+        }
+
+        res.json({ success: true, blog });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
+    }
+}
+
+export const updateBlogByIdAdmin = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, subTitle, description, category, isPublished, metaDescription } = req.body;
+
+        const updateData = {};
+        if (title !== undefined) {
+            updateData.title = title;
+            updateData.slug = await createUniqueSlug(title, id);
+        }
+        if (subTitle !== undefined) updateData.subTitle = subTitle;
+        if (metaDescription !== undefined) updateData.metaDescription = metaDescription;
+        if (description !== undefined) updateData.description = description;
+        if (category !== undefined) updateData.category = category;
+        if (isPublished !== undefined) {
+            updateData.isPublished = isPublished === 'true' || isPublished === true;
+        }
+
+        if (req.file) {
+            const uploadResponse = await imagekit.upload({
+                file: req.file.buffer,
+                fileName: req.file.originalname,
+                folder: "blogs"
+            });
+
+            updateData.image = uploadResponse.url;
+        }
+
+        const updatedBlog = await Blog.findByIdAndUpdate(id, updateData, { new: true });
+        if (!updatedBlog) {
+            return res.json({ success: false, message: "Blog not found" });
+        }
+
+        res.json({ success: true, message: "Blog updated successfully", blog: updatedBlog });
+    } catch (error) {
+        res.json({ success: false, message: error.message });
     }
 }
 
@@ -172,4 +227,3 @@ export const updateBlogPublishStatus = async (req, res) => {
         res.json({ success: false, message: error.message });
     }
 }
-

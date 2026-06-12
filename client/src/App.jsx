@@ -24,6 +24,7 @@ const App = () => {
         <Route path='/admin' element={token ? <Layout /> : <Login/> } > {/* neu nguoi dung da dang nhap (co token) thi hien thi component Layout, nguoc lai hien thi component Login de nguoi dung dang nhap */}
           <Route index element={<Dashboard />} />
           <Route path='addBlog' element={<AddBlog />} />
+          <Route path='editBlog/:id' element={<AddBlog />} />
           <Route path='comments' element={<Comment />} />
           <Route path='listBlogs' element={<ListBlog />} />
         </Route>

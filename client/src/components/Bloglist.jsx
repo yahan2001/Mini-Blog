@@ -1,6 +1,5 @@
 import React from 'react'
 import { blogCategories } from '../assets/assets'
-import { assets } from '../assets/assets'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Blogcard } from './Blogcard'
@@ -11,18 +10,25 @@ const Bloglist = () => {
     const { blogs, input } = useAppContext()
 
     const filterBlogs = () => {
+        const searchTerm = input.trim().toLowerCase()
         if (menu === "All") {
             return blogs.filter((blog) => 
-                blog.title.toLowerCase().includes(input.toLowerCase()) ||
-                blog.category.toLowerCase().includes(input.toLowerCase())
+                blog.title.toLowerCase().includes(searchTerm) ||
+                blog.subTitle?.toLowerCase().includes(searchTerm) ||
+                blog.category.toLowerCase().includes(searchTerm) ||
+                blog.description?.toLowerCase().includes(searchTerm)
             )
         }
         return blogs.filter((blog) => 
             blog.category === menu &&
-            (blog.title.toLowerCase().includes(input.toLowerCase()) ||
-            blog.category.toLowerCase().includes(input.toLowerCase()))
+            (blog.title.toLowerCase().includes(searchTerm) ||
+            blog.subTitle?.toLowerCase().includes(searchTerm) ||
+            blog.category.toLowerCase().includes(searchTerm) ||
+            blog.description?.toLowerCase().includes(searchTerm))
         )
     }
+
+    const filteredBlogs = filterBlogs()
 
 
   return (
@@ -43,8 +49,13 @@ const Bloglist = () => {
             ))}
         </div>
         <div className ='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-8 mb-24 mx-8 sm:mx-16 xl:mx-40'>
-            {filterBlogs().map((blog)=> <Blogcard key={blog._id} blog={blog} />)}
+            {filteredBlogs.map((blog)=> <Blogcard key={blog._id} blog={blog} />)}
         </div>
+        {filteredBlogs.length === 0 && (
+            <div className='-mt-16 mb-24 text-center text-gray-500'>
+                No blogs found.
+            </div>
+        )}
     </div>
   )
 }

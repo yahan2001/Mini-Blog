@@ -8,7 +8,7 @@ const BlogTableItem = ({ blog ,fetchBlogs,index}) => {
   const { title, createdAt } = blog;
   const BlogDate = new Date(createdAt)
 
-  const {axios} = useAppContext() // su dung hook useAppContext de lay gia tri axios tu context de thuc hien cac yeu cau HTTP den server
+  const {axios, navigate} = useAppContext() // su dung hook useAppContext de lay gia tri axios tu context de thuc hien cac yeu cau HTTP den server
 
   const deleteBlog = async () => {
     const confirm = window.confirm("Are you sure you want to delete this blog?");
@@ -52,6 +52,7 @@ const BlogTableItem = ({ blog ,fetchBlogs,index}) => {
             >{blog.isPublished ? 'Published' : 'Unpublished'}</p>
         </td>
         <td className='px-2 py-4 flex text-xs gap-3'>
+            <button onClick={() => navigate(`/admin/editBlog/${blog._id}`)} className='border px-2 py-0.5 mt-1 rounded cursor-pointer'>Edit</button>
             <button onClick={togglePublish} className='border px-2 py-0.5 mt-1 rounded cursor-pointer '>{blog.isPublished ? 'Unpublish' : 'Publish'}</button>
             <img src={assets.cross_icon} className='w-8 hover:scale-110 transition-all cursor-pointer' alt=""  onClick={deleteBlog}/>
         </td>

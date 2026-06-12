@@ -1,6 +1,5 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
-import { dashboard_data } from '../../assets/assets'
 import BlogTableItem from '../../components/admin/BlogTableItem'
 import toast from 'react-hot-toast'
 import { useAppContext } from '../../context/AppContext'
