@@ -1,19 +1,28 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom';
-import { getReadingTime } from '../utils/blog';
+import { getReadingTime, stripHtml } from '../utils/blog';
+import moment from 'moment';
 
 export const Blogcard = ({blog}) => {
-    const {title, description, category, image, _id, slug} = blog;
+    const {title, description, category, image, _id, slug, createdAt} = blog;
     const navigate = useNavigate();
   return (
-    <div onClick={()=> navigate(`/blog/${slug || _id}`)} className='w-full rounded-lg  shadow hover:scale-102 hover-shadoe-primary/25 duration-300 cursor-pointer'>
-        <img src={image} alt="" className='aspect-video' />
-        <span className='ml-5 mt-4 px-3 py-1 inline-block bg-primary/20 rounded-full text-primary text-xs'>{category}</span>
-        <div className ='p-5'>
-            <h5 className='mb-2 font-medium text-gray-900'>{title}</h5>
-            <p className='mb-2 text-xs text-gray-400'>{getReadingTime(description)} min read</p>
-            <p className='mb-3 text-xs text-gray-600' dangerouslySetInnerHTML=
-            {{__html: description.slice(0,80)}} ></p>
+    <div onClick={()=> navigate(`/blog/${slug || _id}`)} className='group flex flex-col sm:flex-row gap-4 py-5 border-b border-gray-200 cursor-pointer'>
+        <img src={image} alt="" className='w-full sm:w-44 aspect-video object-cover rounded border border-gray-100 bg-gray-100' />
+        <div className='flex-1 min-w-0'>
+            <div className='flex flex-wrap items-center gap-2 text-sm text-gray-400'>
+              <span className='font-medium text-gray-600'>MiniBlog Author</span>
+              <span>·</span>
+              <span>{createdAt ? moment(createdAt).fromNow() : 'Just now'}</span>
+              <span>·</span>
+              <span>{getReadingTime(description)} min read</span>
+            </div>
+            <h5 className='mt-2 text-xl font-semibold text-gray-900 group-hover:text-primary transition-colors line-clamp-2'>{title}</h5>
+            <p className='mt-2 text-sm text-gray-500 line-clamp-2'>{stripHtml(description).slice(0, 150)}</p>
+            <div className='mt-4 flex items-center gap-3'>
+              <span className='px-3 py-1 inline-block bg-primary/10 rounded-full text-primary text-xs'>{category}</span>
+              <span className='text-xs text-gray-400'>Read article</span>
+            </div>
         </div>
     </div>
   )

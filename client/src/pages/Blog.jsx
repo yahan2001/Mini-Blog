@@ -1,51 +1,28 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import { FiHeart } from 'react-icons/fi'
 import { assets } from "../assets/assets"
-import Navbar from '../components/Navbar'
 import moment from 'moment'
 import Footer from '../components/Footer'
 import Loader from '../components/Loader'
-import axios from 'axios'
 import toast from 'react-hot-toast'
-import { useAppContext } from '../context/AppContext'
+import { useAppContext } from '../context/useAppContext'
 import { Blogcard } from '../components/Blogcard'
 import { getReadingTime } from '../utils/blog'
-
-// Set axios baseURL
-axios.defaults.baseURL = 'http://localhost:3000'
+import PublicSidebar from '../components/PublicSidebar'
 
 const Blog = () => {
   const { id } = useParams()
-  const { blogs } = useAppContext()
+  const { blogs, token, user, navigate, axios } = useAppContext()
 
   const [data, setData] = useState(null)
   const [comments, setComments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [name, setName] = useState('')
   const [content, setContent] = useState('')
+  const [likes, setLikes] = useState(0)
+  const [isLiked, setIsLiked] = useState(false)
 
-  const fetchBlogData = async () => {
-    try {
-      setLoading(true)
-      console.log('Fetching blog with ID:', id)
-      const response = await axios.get(`/api/blog/${id}`)
-      console.log('Full response:', response.data)
-      const blogData = response.data.blog || response.data.data
-      if (response.data.success && blogData) {
-        setData(blogData)
-        fetchComments(blogData._id)
-      } else {
-        toast.error('Blog not found')
-      }
-    } catch (error) {
-      console.error('Error fetching blog:', error)
-      toast.error(error.message)
-    } finally {
-      setLoading(false)
-    }
-  }
-  
-  const fetchComments = async (blogId) => {
+  const fetchComments = useCallback(async (blogId) => {
     try {
       const { data } = await axios.get(`/api/blog/comment/${blogId}`)
       if (data.success) {
@@ -56,8 +33,49 @@ const Blog = () => {
     } catch (error) {
       toast.error(error.message)
     }
-  }
+  }, [axios])
 
+  const fetchBlogData = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get(`/api/blog/${id}`)
+      const blogData = response.data.blog || response.data.data
+      if (response.data.success && blogData) {
+        setData(blogData)
+        setLikes(blogData.likedBy?.length || 0)
+        setIsLiked(blogData.likedBy?.some((userId) => userId === user?.id || userId === user?._id) || false)
+        fetchComments(blogData._id)
+      } else {
+        toast.error('Blog not found')
+      }
+    } catch (error) {
+      console.error('Error fetching blog:', error)
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [axios, fetchComments, id, user?.id, user?._id])
+
+  const likeBlog = async () => {
+    if (!data?._id) return
+    if (!token) {
+      navigate('/admin')
+      return
+    }
+
+    try {
+      const response = await axios.post('/api/blog/like', { blogId: data._id })
+      if (response.data.success) {
+        setLikes(response.data.likes)
+        setIsLiked(response.data.liked)
+      } else {
+        toast.error(response.data.message)
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message)
+    }
+  }
+  
   const addcomment = async (e) => {
     e.preventDefault()
     if (!data?._id) {
@@ -66,10 +84,9 @@ const Blog = () => {
     }
 
     try {
-      const response = await axios.post('/api/blog/add-comment', { name, content, blogId: data._id })
+      const response = await axios.post('/api/blog/add-comment', { content, blogId: data._id })
       if (response.data.success) {
         toast.success('Comment added successfully')
-        setName('')
         setContent('')
         fetchComments(data._id)
       } else {
@@ -82,7 +99,7 @@ const Blog = () => {
 
   useEffect(() => {
     fetchBlogData()
-  }, [id])
+  }, [fetchBlogData])
 
   useEffect(() => {
     if (!data) return
@@ -107,16 +124,16 @@ const Blog = () => {
     .slice(0, 3)
 
   return (
-    <div className='relative'>
-      <img
-        src={assets.gradientBackground}
-        alt=""
-        className='absolute -top-50 -z-1 opacity-50'
-      />
+    <div className='min-h-screen bg-gray-50 lg:flex'>
+      <PublicSidebar />
+      <main className='relative flex-1 bg-white'>
+        <img
+          src={assets.gradientBackground}
+          alt=""
+          className='absolute -top-50 -z-1 opacity-50'
+        />
 
-      <Navbar />
-
-      <div className='text-center mt-20 text-gray-600'>
+      <div className='text-center pt-20 text-gray-600'>
         <p className='text-primary py-4 font-medium'>
           Published on {moment(data.createdAt).format('MMMM Do YYYY')}
         </p>
@@ -133,6 +150,10 @@ const Blog = () => {
           Michael Brown
         </p>
         <p className='text-sm text-gray-400'>{getReadingTime(data.description)} min read</p>
+        <button onClick={likeBlog} className={`mt-5 inline-flex items-center gap-2 rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium hover:bg-gray-50 cursor-pointer ${isLiked ? 'text-primary' : 'text-gray-600'}`}>
+          <FiHeart className={isLiked ? 'fill-current' : ''} />
+          {likes} likes
+        </button>
       </div>
 
       <div className='mx-5 max-w-5xl md:mx-auto my-10 mt-6'>
@@ -179,13 +200,23 @@ const Blog = () => {
           <p className='font-semibold mb-4'>Add your comment</p>
 
           <form onSubmit={addcomment} className='flex flex-col items-start gap-4 max-w-lg w-full'>
-            <input onChange={(e) => setName(e.target.value)} value={name} type="text" placeholder='Name' required className='w-full p-2 border border-gray-300 rounded outline-none'/>
+            {token ? (
+              <>
+                <p className='text-sm text-gray-500'>Commenting as <span className='font-medium text-gray-700'>{user?.name}</span></p>
+                <textarea onChange={(e) => setContent(e.target.value)} value={content} placeholder='Comment' required className='w-full p-2 border border-gray-300 rounded outline-none h-48'></textarea>
 
-            <textarea onChange={(e) => setContent(e.target.value)} value={content} placeholder='Comment' required className='w-full p-2 border border-gray-300 rounded outline-none h-48'></textarea>
-
-            <button type='submit' className='bg-primary text-white p-2 px-8 hover:scale-105 transition-all cursor-pointer rounded'>
-              Submit
-            </button>
+                <button type='submit' className='bg-primary text-white p-2 px-8 hover:scale-105 transition-all cursor-pointer rounded'>
+                  Submit
+                </button>
+              </>
+            ) : (
+              <div>
+                <p className='text-gray-500 mb-4'>Please sign in as an author to comment.</p>
+                <button type='button' onClick={() => navigate('/admin')} className='bg-primary text-white p-2 px-8 hover:scale-105 transition-all cursor-pointer rounded'>
+                  Sign in
+                </button>
+              </div>
+            )}
           </form>
         </div>
 
@@ -211,6 +242,7 @@ const Blog = () => {
         )}
       </div>
       <Footer />
+      </main>
     </div>
   )
 }

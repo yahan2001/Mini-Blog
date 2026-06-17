@@ -2,7 +2,7 @@ import React from 'react'
 import { assets } from '../../assets/assets'
 import BlogTableItem from '../../components/admin/BlogTableItem'
 import toast from 'react-hot-toast'
-import { useAppContext } from '../../context/AppContext'
+import { useAppContext } from '../../context/useAppContext'
 const Dashboard = () => {
   
   const[dashboardData, setDashboardData] = React.useState({
@@ -15,7 +15,7 @@ const Dashboard = () => {
   const {axios} = useAppContext() // su dung hook useAppContext de lay gia tri axios tu context de thuc hien cac yeu cau HTTP den server
 
 //tao ham fetchDashboardData de lay du lieu dashboard tu server va cap nhat state dashboardData, neu co loi thi hien thi thong bao loi
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = React.useCallback(async () => {
     try {
       const { data } = await axios.get('/api/admin/dashboard');
       data.success ? setDashboardData(data.data) : toast.error(data.message); // neu yeu cau thanh cong thi cap nhat state dashboardData voi du lieu dashboard tu server, neu khong thanh cong thi hien thi thong bao loi
@@ -23,11 +23,11 @@ const Dashboard = () => {
       console.error("Error fetching dashboard data:", error);
       toast.error(error.message); // neu co loi thi hien thi thong bao loi
     }
-  }
+  }, [axios])
 
   React.useEffect(() => {
     fetchDashboardData()
-  }, [])
+  }, [fetchDashboardData])
 
   return (
     <div className='flex-1 p-4 md:p-10 bg-pink-50/50'>

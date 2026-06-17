@@ -5,7 +5,7 @@ import ReactQuill from 'react-quill'
 import { useParams } from 'react-router-dom'
 import 'react-quill/dist/quill.snow.css'
 import { assets, blogCategories } from '../../assets/assets'
-import { useAppContext } from '../../context/AppContext'
+import { useAppContext } from '../../context/useAppContext'
 import { parse } from 'marked' // su dung marked de chuyen doi markdown sang html
 import { stripHtml } from '../../utils/blog'
 const AddBlog = () => {
@@ -153,12 +153,9 @@ const AddBlog = () => {
   }
 
   const onSubmitHandler = async (e) => {
-    console.log('onSubmitHandler called')
     e.preventDefault()
     
-    console.log('Form data:', {image, title, subtitle, metaDescription, description, category})
     if ((!image && !isEditMode) || !title || !subtitle || !description || !category) {
-      console.log('Validation failed')
       toast.error('Please fill all fields')
       return
     }
@@ -174,8 +171,6 @@ const AddBlog = () => {
       formData.append('category', category)
       formData.append('isPublished', isPublic)
 
-      console.log('Token:', token)
-      console.log('Sending request to blog API')
       const response = isEditMode
         ? await axios.put(`/api/admin/blogs/${id}`, formData, {
           headers: {
@@ -188,7 +183,6 @@ const AddBlog = () => {
         }
       })
 
-      console.log('Response:', response.data)
       if (response.data.success) {
         toast.success(isEditMode ? 'Blog updated successfully' : 'Blog added successfully')
         navigate('/admin/listBlogs')
@@ -196,8 +190,6 @@ const AddBlog = () => {
         toast.error(response.data.message)
       }
     } catch (error) {
-      console.log('Full error:', error)
-      console.log('Error response:', error.response)
       toast.error(error.response?.data?.message || error.message)
     } finally {
       setIsAdding(false)

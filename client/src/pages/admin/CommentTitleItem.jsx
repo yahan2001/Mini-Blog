@@ -1,6 +1,6 @@
 import React from 'react'
 import { assets } from '../../assets/assets'
-import { useAppContext } from '../../context/AppContext'
+import { useAppContext } from '../../context/useAppContext'
 import toast from 'react-hot-toast'
 
 const CommentTitleItem = ( {comment, fetchComments}) => {

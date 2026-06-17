@@ -1,7 +1,7 @@
 import React from 'react'
 import CommentTitleItem from './CommentTitleItem'
 
-import { useAppContext } from '../../context/AppContext'
+import { useAppContext } from '../../context/useAppContext'
 import toast from 'react-hot-toast'
 const Comment = () => {
 
@@ -11,7 +11,7 @@ const Comment = () => {
   const{axios} = useAppContext() // su dung hook useAppContext de lay gia tri axios tu context de thuc hien cac yeu cau HTTP den server
 
   //tao ham fetchComments de lay danh sach cac comment tu server va cap nhat state comments, neu co loi thi hien thi thong bao loi
-  const fetchComments = async () => {
+  const fetchComments = React.useCallback(async () => {
     try {
       const { data } = await axios.get('/api/admin/comments');
       data.success ? setComments(data.comments) : toast.error(data.message);
@@ -19,11 +19,11 @@ const Comment = () => {
       console.error("Error fetching comments:", error);
       toast.error(error.message);
     }
-  }
+  }, [axios])
 
   React.useEffect(() => {
     fetchComments()
-  }, [])
+  }, [fetchComments])
 
 
   return (

@@ -1,18 +1,20 @@
 import React from 'react'
-import Navbar from '../components/Navbar'
 import Header from '../components/Header'
 import Bloglist from '../components/Bloglist'
-import Newsletter from '../components/Newsletter'
-import Footer from '../components/Footer'
+import PublicSidebar from '../components/PublicSidebar'
+import { useAppContext } from '../context/useAppContext'
 const Home = () => {
+  const { input } = useAppContext()
+  const isSearching = input.trim().length > 0
+
   return (
-    <>
-        <Navbar />
-        <Header />
-        <Bloglist />
-        <Newsletter />
-        <Footer />
-    </>
+    <div className='min-h-screen bg-gray-50 lg:flex'>
+        <PublicSidebar />
+        <main className='flex-1'>
+            {!isSearching && <Header />}
+            <Bloglist />
+        </main>
+    </div>
   )
 }
 
